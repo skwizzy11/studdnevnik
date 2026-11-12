@@ -25,6 +25,16 @@ pipeline {
                 apiVersion: v1
                 kind: Pod
                 spec:
+                  # Агент не запускаем на worker2: его выключают на демонстрации
+                  # отказа, и у него бывают проблемы с выходом в интернет.
+                  affinity:
+                    nodeAffinity:
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                        - matchExpressions:
+                          - key: kubernetes.io/hostname
+                            operator: NotIn
+                            values: ['worker2']
                   containers:
                   - name: tools
                     image: alpine/k8s:1.27.4
