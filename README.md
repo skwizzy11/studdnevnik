@@ -24,7 +24,7 @@
 | `k8s/backend.yaml` | бэкенд `crud-api`, предпочитает worker2 |
 | `k8s/frontend.yaml` | фронтенд `crud-frontend` на worker1 + LoadBalancer 192.168.0.200 |
 | `Jenkinsfile` | пайплайн деплоя |
-| `jenkins/jenkins-pv.yaml` | постоянное хранилище для Jenkins на worker2 |
+| `jenkins/jenkins-pv.yaml` | постоянное хранилище для Jenkins на worker1 |
 | `docker-compose.yaml` | локальный запуск: сайт :8080, phpMyAdmin :8081 |
 
 Все образы собраны под **arm64** (Apple Silicon / Ubuntu arm64).

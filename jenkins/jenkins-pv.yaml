@@ -1,8 +1,8 @@
-# Постоянное хранилище для Jenkins: папка /mnt/jenkins на worker2.
+# Постоянное хранилище для Jenkins: папка /mnt/jenkins на worker1.
 # Без него Jenkins хранит плагины, учётные данные и задачи во временной
 # папке пода, и всё пропадает при каждом пересоздании пода.
 #
-# Перед применением на worker2:
+# Перед применением на worker1:
 #   sudo mkdir -p /mnt/jenkins && sudo chown 1000:1000 /mnt/jenkins
 apiVersion: v1
 kind: PersistentVolume
@@ -17,7 +17,8 @@ spec:
   storageClassName: jenkins-local
   local:
     path: /mnt/jenkins
-  # Папка есть только на worker2, поэтому и под Jenkins будет запускаться там
+  # Папка есть только на worker1, поэтому и под Jenkins будет запускаться там.
+  # worker1 не выключают на демонстрации отказа, и с сетью у него порядок.
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -25,7 +26,7 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - worker2
+                - worker1
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
