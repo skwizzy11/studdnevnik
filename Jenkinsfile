@@ -1,17 +1,19 @@
 // Пайплайн СтудДневника. Jenkins берёт этот файл и манифесты из k8s/
-// прямо из репозитория на GitHub (Pipeline script from SCM).
+// прямо из репозитория на GitHub (Pipeline script from SCM) и запускается
+// сам после каждого git push (раз в минуту проверяет репозиторий).
 //
-// База данных доступна приложению только по порту 33006 (k8s/db-service.yaml).
-// Параметр DB_PORT задаёт порт, на котором пайплайн ищет базу:
+// База данных доступна только по порту 33006 (k8s/db-service.yaml).
+// Порт, по которому приложение ходит в базу, задаётся в коде —
+// переменная DB_PORT в k8s/backend.yaml:
 //   * 33006 — база отвечает → разворачиваются фронтенд и бэкенд, сборка SUCCESS;
 //   * 3306  — база на этом порту не отвечает → разворачивается только фронтенд,
 //             бэкенд выключается (0 подов), сайт открывается с плашкой
 //             «База данных недоступна», сборка UNSTABLE.
 //
 // Этапы:
-//   1. Проверка Kubernetes.
+//   1. Проверка Kubernetes, чтение порта из k8s/backend.yaml.
 //   2. Сервис базы на порту 33006.
-//   3. Проверка базы на выбранном порту.
+//   3. Проверка базы на порту из кода.
 //   4. Деплой фронтенда (всегда).
 //   5. Деплой бэкенда (только если база доступна) или его выключение.
 //   6. Финальная проверка.
@@ -46,12 +48,10 @@ pipeline {
         }
     }
 
-    parameters {
-        choice(
-            name: 'DB_PORT',
-            choices: ['33006', '3306'],
-            description: 'Порт базы данных. База работает только на 33006; при 3306 разворачивается только фронтенд.'
-        )
+    // GitHub не может достучаться до Jenkins во внутренней сети VirtualBox,
+    // поэтому Jenkins сам раз в минуту проверяет, нет ли новых коммитов.
+    triggers {
+        pollSCM('* * * * *')
     }
 
     environment {
@@ -69,7 +69,18 @@ pipeline {
                     sh 'kubectl get nodes -o wide'
                     sh 'kubectl get namespaces'
                     echo "Код взят из репозитория: ${env.GIT_URL ?: 'GitHub'}, коммит ${env.GIT_COMMIT ?: '-'}"
-                    sh 'ls -la k8s/'
+                    sh 'git log -1 --format="Последний коммит: %h %an — %s" || true'
+                    script {
+                        // Порт базы берём из кода: значение DB_PORT в k8s/backend.yaml
+                        env.DB_PORT = sh(
+                            script: "grep -A1 'name: DB_PORT' k8s/backend.yaml | grep -o '[0-9][0-9]*' | head -1",
+                            returnStdout: true
+                        ).trim()
+                        if (env.DB_PORT == '') {
+                            error("В k8s/backend.yaml не найдена переменная DB_PORT!")
+                        }
+                        echo "Порт базы данных из кода (k8s/backend.yaml): ${env.DB_PORT}"
+                    }
                 }
             }
         }
@@ -99,7 +110,7 @@ pipeline {
             steps {
                 container('tools') {
                     script {
-                        echo "Проверка базы данных: ${env.DB_HOST}:${params.DB_PORT}"
+                        echo "Проверка базы данных: ${env.DB_HOST}:${env.DB_PORT}"
                         def problem = null
 
                         // 1. Имя сервиса резолвится в DNS кластера
@@ -133,8 +144,8 @@ pipeline {
 
                         // 4. Выбранный порт принимает соединения
                         if (!problem) {
-                            if (sh(script: "nc -z -w 5 ${env.DB_HOST} ${params.DB_PORT}", returnStatus: true) != 0) {
-                                problem = "порт ${params.DB_PORT} не принимает соединения (база работает только на 33006)"
+                            if (sh(script: "nc -z -w 5 ${env.DB_HOST} ${env.DB_PORT}", returnStatus: true) != 0) {
+                                problem = "порт ${env.DB_PORT} не принимает соединения (база работает только на 33006)"
                             }
                         }
 
@@ -143,7 +154,7 @@ pipeline {
                             unstable("База данных недоступна: ${problem}. Будет развёрнут только фронтенд.")
                         } else {
                             env.DB_OK = 'true'
-                            echo "База данных доступна на порту ${params.DB_PORT}"
+                            echo "База данных доступна на порту ${env.DB_PORT}"
                         }
                     }
                 }
@@ -165,7 +176,6 @@ pipeline {
             steps {
                 container('tools') {
                     sh "kubectl apply -f k8s/backend.yaml"
-                    sh "kubectl set env deployment/crud-api DB_PORT=${params.DB_PORT} -n ${env.NS}"
                     sh "kubectl rollout restart deployment/crud-api -n ${env.NS}"
                     sh "kubectl rollout status deployment/crud-api -n ${env.NS} --timeout=180s"
                 }
@@ -176,7 +186,7 @@ pipeline {
             when { expression { env.DB_OK != 'true' } }
             steps {
                 container('tools') {
-                    echo "База недоступна на порту ${params.DB_PORT} — бэкенд выключается, работает только фронтенд"
+                    echo "База недоступна на порту ${env.DB_PORT} — бэкенд выключается, работает только фронтенд"
                     sh "kubectl scale deployment/crud-api --replicas=0 -n ${env.NS} || true"
                     sh "kubectl wait --for=delete pod -l app=crud-api -n ${env.NS} --timeout=60s || true"
                 }
@@ -216,7 +226,7 @@ pipeline {
                             if (!health.contains('"status":"ok"')) {
                                 error("Приложение запущено, но не может работать с базой данных!")
                             }
-                            echo "Работают фронтенд и бэкенд, база доступна на порту ${params.DB_PORT}"
+                            echo "Работают фронтенд и бэкенд, база доступна на порту ${env.DB_PORT}"
                         } else {
                             echo "Работает только фронтенд: на странице плашка «База данных недоступна»"
                         }
@@ -235,10 +245,10 @@ pipeline {
             }
         }
         success {
-            echo "Деплой успешно завершён: фронтенд и бэкенд работают, база на порту ${params.DB_PORT}"
+            echo "Деплой успешно завершён: фронтенд и бэкенд работают, база на порту ${env.DB_PORT}"
         }
         unstable {
-            echo "Деплой частичный: работает только фронтенд (база недоступна на порту ${params.DB_PORT})"
+            echo "Деплой частичный: работает только фронтенд (база недоступна на порту ${env.DB_PORT})"
         }
         failure {
             echo "Деплой завершился с ошибками"
