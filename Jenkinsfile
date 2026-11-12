@@ -79,7 +79,9 @@ pipeline {
                     sh 'kubectl get nodes -o wide'
                     sh 'kubectl get namespaces'
                     echo "Код взят из репозитория: ${env.GIT_URL ?: 'GitHub'}, коммит ${env.GIT_COMMIT ?: '-'}"
-                    sh 'git log -1 --format="Последний коммит: %h %an — %s" || true'
+                    // Рабочую папку создал контейнер jnlp от другого пользователя,
+                    // поэтому git просит явно разрешить её (safe.directory).
+                    sh 'git -c safe.directory="*" log -1 --format="Последний коммит: %h %an — %s" || true'
                     script {
                         // Порт базы берём из кода: значение DB_PORT в k8s/backend.yaml
                         env.DB_PORT = sh(
@@ -130,10 +132,19 @@ pipeline {
 
                         // 2. У сервиса есть endpoint'ы — селектор находит поды ProxySQL
                         if (!problem) {
-                            def endpoint = sh(
-                                script: "kubectl get endpoints ${env.DB_SERVICE} -n ${env.NS} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null",
-                                returnStdout: true
-                            ).trim()
+                            // Если сервис только что создан, Kubernetes заполняет
+                            // endpoint'ы через пару секунд — ждём до 20 с.
+                            def endpoint = ''
+                            for (int i = 0; i < 10 && endpoint == ''; i++) {
+                                endpoint = sh(
+                                    script: "kubectl get endpoints ${env.DB_SERVICE} -n ${env.NS} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true",
+                                    returnStdout: true
+                                ).trim()
+                                if (endpoint == '') {
+                                    sleep 2
+                                }
+                            }
+                            echo "Endpoint сервиса ${env.DB_SERVICE}: ${endpoint ?: 'нет'}"
                             if (endpoint == '') {
                                 sh "kubectl get service ${env.DB_SERVICE} -n ${env.NS} -o jsonpath='{.spec.selector}' || true"
                                 problem = "у сервиса ${env.DB_SERVICE} нет активных endpoint'ов"
@@ -142,11 +153,14 @@ pipeline {
 
                         // 3. Кластер PXC жив: для кворума нужно большинство узлов (2 из 3)
                         if (!problem) {
+                            // Считаем только готовые узлы (READY 1/1): под может быть
+                            // Running, но ещё не принимать запросы.
+                            sh "kubectl get pods -n ${env.NS} -l app.kubernetes.io/component=pxc -o wide || true"
                             def pxcRunning = sh(
-                                script: "kubectl get pods -n ${env.NS} -l app.kubernetes.io/component=pxc --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l",
+                                script: "kubectl get pods -n ${env.NS} -l app.kubernetes.io/component=pxc --no-headers 2>/dev/null | awk '\$2 == \"1/1\"' | wc -l",
                                 returnStdout: true
                             ).trim().toInteger()
-                            echo "Узлов PXC в статусе Running: ${pxcRunning} из 3"
+                            echo "Готовых узлов PXC: ${pxcRunning} из 3"
                             if (pxcRunning < 2) {
                                 problem = 'у кластера PXC нет кворума'
                             }
