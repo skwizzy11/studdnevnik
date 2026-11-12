@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>СтудДневник</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b55e6'/%3E%3Cpath d='M7 9h6a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H7zM25 9h-6a3 3 0 0 0-3 3v11a2 2 0 0 1 2-2h7z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- FullCalendar 5.11.3 лежит в образе (app/vendor), чтобы не зависеть от внешнего CDN -->
+<link href="vendor/fullcalendar/main.min.css" rel="stylesheet">
+<script src="vendor/fullcalendar/main.min.js"></script>
+<script src="vendor/fullcalendar/ru.js"></script>
+<style>
+:root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface-2: #f0f1f7;
+    --border: #e4e6ef;
+    --border-strong: #cfd3e1;
+    --text: #1a1c28;
+    --muted: #6a6f85;
+    --primary: #5b55e6;
+    --primary-hover: #4a44d4;
+    --primary-soft: #eeedfd;
+    --note: #e59a0b;
+    --note-soft: #fdf4e1;
+    --google: #1e9e64;
+    --google-soft: #e3f5ec;
+    --danger: #dc3b4b;
+    --danger-soft: #fdecee;
+    --shadow-sm: 0 1px 2px rgba(20, 22, 40, .06);
+    --shadow: 0 4px 16px rgba(20, 22, 40, .07);
+    --shadow-lg: 0 24px 48px rgba(20, 22, 40, .18);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --sidebar: 248px;
+
+    --fc-border-color: var(--border);
+    --fc-page-bg-color: var(--surface);
+    --fc-neutral-bg-color: var(--surface-2);
+    --fc-today-bg-color: var(--primary-soft);
+    --fc-event-bg-color: var(--primary);
+    --fc-event-border-color: var(--primary);
+    --fc-now-indicator-color: var(--danger);
+    --fc-list-event-hover-bg-color: var(--surface-2);
+    --fc-button-bg-color: var(--surface);
+    --fc-button-border-color: var(--border);
+    --fc-button-text-color: var(--text);
+    --fc-button-hover-bg-color: var(--surface-2);
+    --fc-button-hover-border-color: var(--border-strong);
+    --fc-button-active-bg-color: var(--primary);
+    --fc-button-active-border-color: var(--primary);
+    color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0e1016;
+        --surface: #161922;
+        --surface-2: #1e222d;
+        --border: #272b38;
+        --border-strong: #363b4b;
+        --text: #e9ebf3;
+        --muted: #989eb3;
+        --primary: #7c77f2;
+        --primary-hover: #8f8bf5;
+        --primary-soft: #23223f;
+        --note: #f0b03c;
+        --note-soft: #33291a;
+        --google: #3cc289;
+        --google-soft: #16302a;
+        --danger: #f0616f;
+        --danger-soft: #3a1d22;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+        --shadow: 0 4px 16px rgba(0, 0, 0, .35);
+        --shadow-lg: 0 24px 48px rgba(0, 0, 0, .55);
+        color-scheme: dark;
+    }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+    margin: 0;
+    font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+.icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-sm { width: 16px; height: 16px; }
+
+/* ---------- кнопки и поля ---------- */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 40px; padding: 0 16px;
+    border: 1px solid transparent; border-radius: var(--radius-sm);
+    font-weight: 600; font-size: 14px; white-space: nowrap;
+    cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, transform .05s;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .6; cursor: progress; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: var(--surface); border-color: var(--border); }
+.btn-secondary:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn-danger { background: transparent; color: var(--danger); }
+.btn-danger:hover { background: var(--danger-soft); }
+.btn-icon { width: 36px; height: 36px; padding: 0; }
+.btn-block { width: 100%; }
+.btn:focus-visible, .input:focus-visible, .nav-item:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 40%, transparent); outline-offset: 2px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field + .field { margin-top: 14px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.field-row .field, .dialog-body .field-row .field { margin-top: 0; }
+.input {
+    width: 100%; min-height: 42px; padding: 10px 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    transition: border-color .15s, box-shadow .15s;
+}
+.input:hover { border-color: var(--border-strong); }
+.input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
+.input[readonly] { background: var(--surface-2); color: var(--muted); }
+textarea.input { resize: vertical; min-height: 96px; }
+.form-error { min-height: 20px; margin-top: 12px; font-size: 13px; color: var(--danger); }
+
+/* ---------- экран входа ---------- */
+.auth {
+    min-height: 100%;
+    display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(380px, 1fr);
+}
+.auth-hero {
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 48px;
+    color: #fff;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,.18), transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(255,186,73,.35), transparent 45%),
+        linear-gradient(135deg, #4b44d6 0%, #6e4fe0 55%, #8a52d8 100%);
+}
+.auth-hero h1 { font-size: 40px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; max-width: 460px; }
+.auth-hero p { margin-top: 16px; font-size: 17px; opacity: .85; max-width: 420px; }
+.hero-list { list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 14px; }
+.hero-list li { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.hero-list .bubble { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,.16); }
+.auth-panel { display: grid; place-items: center; padding: 32px 24px; }
+.auth-card { width: 100%; max-width: 380px; }
+.auth-card h2 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+.auth-card .sub { margin-top: 6px; color: var(--muted); }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 28px 0 24px; padding: 4px; background: var(--surface-2); border-radius: 12px; }
+.tab { height: 36px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 700; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.demo-hint { margin-top: 20px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13px; color: var(--muted); }
+.demo-hint b { color: var(--text); font-weight: 700; }
+
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
+.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #5b55e6, #8a52d8); box-shadow: 0 6px 14px rgba(91,85,230,.35); }
+.auth-hero .brand-mark { background: rgba(255,255,255,.18); box-shadow: none; }
+
+/* ---------- каркас приложения ---------- */
+.app { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100%; }
+.sidebar {
+    position: sticky; top: 0; height: 100vh;
+    display: flex; flex-direction: column; gap: 28px;
+    padding: 24px 16px;
+    background: var(--surface); border-right: 1px solid var(--border);
+}
+.sidebar .brand { padding: 0 8px; }
+.nav { display: grid; gap: 4px; }
+.nav-item {
+    display: flex; align-items: center; gap: 12px;
+    height: 42px; padding: 0 12px;
+    border: 0; border-radius: var(--radius-sm); background: transparent;
+    color: var(--muted); font-weight: 600; text-align: left; cursor: pointer;
+}
+.nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item[aria-current="page"] { background: var(--primary-soft); color: var(--primary); }
+.user-card { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--surface-2); }
+.user-card .meta { min-width: 0; flex: 1; }
+.user-card .name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-card .email { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatar {
+    display: grid; place-items: center; flex: none;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #5b55e6, #8a52d8); color: #fff;
+    font-weight: 800; font-size: 14px; letter-spacing: .02em;
+}
+.avatar-lg { width: 72px; height: 72px; font-size: 24px; }
+
+.main { min-width: 0; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 28px 32px 20px; }
+.topbar h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.topbar p { color: var(--muted); margin-top: 2px; }
+.view { padding: 0 32px 32px; flex: 1; min-height: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+
+/* ---------- календарь ---------- */
+.calendar-card { display: flex; flex-direction: column; padding: 20px; height: calc(100vh - 140px); min-height: 560px; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; }
+#calendar { flex: 1; min-height: 0; }
+.fc { font-size: 14px; }
+.fc .fc-toolbar.fc-header-toolbar { margin-bottom: 16px; gap: 8px; flex-wrap: wrap; }
+.fc .fc-toolbar-title { font-size: 20px; font-weight: 800; letter-spacing: -.01em; text-transform: capitalize; }
+.fc .fc-button { height: 36px; padding: 0 12px; font-weight: 600; font-size: 13px; box-shadow: none !important; text-transform: none; }
+.fc .fc-button-group > .fc-button:first-child { border-radius: 10px 0 0 10px; }
+.fc .fc-button-group > .fc-button:last-child { border-radius: 0 10px 10px 0; }
+.fc .fc-button:not(.fc-button-group > .fc-button) { border-radius: 10px; }
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active { color: #fff; }
+.fc .fc-today-button:disabled { opacity: .5; }
+.fc a { color: inherit; text-decoration: none; }
+.fc .fc-col-header-cell-cushion { padding: 10px 4px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.fc .fc-daygrid-day-number { margin: 4px; padding: 2px 7px; font-size: 13px; font-weight: 600; color: var(--muted); border-radius: 999px; }
+.fc .fc-day-today .fc-daygrid-day-number { background: var(--primary); color: #fff; }
+.fc .fc-day-other .fc-daygrid-day-number { opacity: .45; }
+.fc .fc-daygrid-day-frame { cursor: pointer; }
+.fc .fc-event { cursor: pointer; border-radius: 6px; }
+.fc .fc-h-event, .fc .fc-v-event { padding: 1px 4px; font-weight: 600; }
+.fc .fc-daygrid-dot-event { padding: 2px 4px; }
+.fc .fc-daygrid-dot-event:hover { background: var(--surface-2); }
+.fc .fc-daygrid-event-dot { border-width: 4px; }
+.fc .fc-event-time { font-weight: 700; }
+.fc .fc-event.ev-note { --fc-event-bg-color: var(--note); --fc-event-border-color: var(--note); }
+.fc .fc-event.ev-google { --fc-event-bg-color: var(--google); --fc-event-border-color: var(--google); }
+.fc .fc-event.has-note .fc-event-title::after { content: ' ✎'; }
+.fc .fc-list-event-dot { border-color: var(--fc-event-border-color); }
+.fc .fc-list-day-cushion { background: var(--surface-2); }
+.fc .fc-timegrid-slot-label-cushion, .fc .fc-timegrid-axis-cushion { font-size: 12px; color: var(--muted); }
+.fc .fc-more-link { font-weight: 700; color: var(--primary); }
+.fc .fc-popover { border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-lg); }
+.fc-theme-standard .fc-scrollgrid { border-radius: 12px; overflow: hidden; }
+
+/* ---------- заметки ---------- */
+.composer { padding: 16px; display: grid; gap: 12px; }
+.composer textarea { min-height: 84px; border: 0; padding: 4px; box-shadow: none !important; resize: none; background: transparent; }
+.composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 13px; }
+kbd { padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 700; background: var(--surface-2); }
+.notes-grid { margin-top: 20px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); align-items: start; }
+.note-card { position: relative; padding: 18px 18px 14px; border-top: 4px solid var(--note); }
+.note-card p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-card footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.note-card .btn-icon { opacity: 0; transition: opacity .15s; }
+.note-card:hover .btn-icon, .note-card:focus-within .btn-icon { opacity: 1; }
+@media (hover: none) { .note-card .btn-icon { opacity: 1; } }
+.empty { display: grid; justify-items: center; gap: 8px; padding: 56px 16px; text-align: center; color: var(--muted); }
+.empty .bubble { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--note-soft); color: var(--note); margin-bottom: 4px; }
+.empty b { color: var(--text); font-size: 16px; }
+.skeleton { height: 120px; border-radius: var(--radius); background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ---------- профиль ---------- */
+.profile { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; max-width: 960px; }
+.profile .card { padding: 24px; }
+.profile-head { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.profile-head .name { font-size: 20px; font-weight: 800; }
+.profile-head .role { color: var(--muted); font-size: 14px; }
+.card h3 { font-size: 16px; font-weight: 800; }
+.card .hint { margin-top: 4px; color: var(--muted); font-size: 14px; }
+.card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.status { display: inline-flex; align-items: center; gap: 8px; margin: 18px 0 4px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--surface-2); color: var(--muted); }
+.status::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.status.on { background: var(--google-soft); color: var(--google); }
+
+/* ---------- модальные окна ---------- */
+dialog {
+    width: min(520px, calc(100vw - 32px)); padding: 0;
+    border: 1px solid var(--border); border-radius: 18px;
+    background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg);
+}
+dialog::backdrop { background: rgba(14, 16, 26, .45); backdrop-filter: blur(4px); }
+dialog[open] { animation: pop .18s ease-out; }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+.dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 22px 24px 0; }
+.dialog-head h2 { font-size: 20px; font-weight: 800; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.dialog-body { padding: 18px 24px; }
+.dialog-foot { display: flex; align-items: center; gap: 8px; padding: 16px 24px 22px; }
+.dialog-foot .spacer { flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; margin-bottom: 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--primary-soft); color: var(--primary); }
+.chip.note { background: var(--note-soft); color: var(--note); }
+.chip.google { background: var(--google-soft); color: var(--google); }
+.when { display: flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 600; font-size: 14px; }
+.description { margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.dialog-body .field { margin-top: 16px; }
+
+/* ---------- уведомления ---------- */
+.status-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    height: 36px; padding: 0 16px;
+    background: var(--note); color: #241a00; font-weight: 700; font-size: 13px; text-align: center;
+}
+body.has-status { padding-top: 36px; }
+body.has-status .sidebar { top: 36px; height: calc(100vh - 36px); }
+.toasts { position: fixed; right: 20px; bottom: 20px; z-index: 60; display: grid; gap: 8px; }
+.toast {
+    display: flex; align-items: center; gap: 10px;
+    max-width: 360px; padding: 12px 16px; border-radius: 12px;
+    background: var(--text); color: var(--bg); font-weight: 600; font-size: 14px;
+    box-shadow: var(--shadow-lg); animation: pop .2s ease-out;
+}
+.toast.error { background: var(--danger); color: #fff; }
+.toast.success::before { content: '✓'; font-weight: 800; color: var(--google); }
+
+/* ---------- адаптив ---------- */
+@media (max-width: 960px) {
+    .auth { grid-template-columns: 1fr; }
+    .auth-hero { display: none; }
+}
+@media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; padding-bottom: 72px; }
+    .sidebar {
+        position: fixed; inset: auto 0 0 0; z-index: 40; height: 64px;
+        flex-direction: row; padding: 8px 12px; border-right: 0; border-top: 1px solid var(--border);
+    }
+    .sidebar .brand, .user-card { display: none; }
+    body.has-status .sidebar { top: auto; height: 64px; }
+    .nav { flex: 1; grid-auto-flow: column; grid-auto-columns: 1fr; }
+    .nav-item { flex-direction: column; justify-content: center; gap: 2px; height: 48px; font-size: 11px; }
+    .topbar { padding: 20px 16px 16px; }
+    .topbar h1 { font-size: 22px; }
+    .topbar p { display: none; }
+    .view { padding: 0 16px 16px; }
+    .calendar-card { padding: 12px; height: calc(100vh - 190px); min-height: 480px; }
+    .fc .fc-toolbar.fc-header-toolbar { flex-direction: column; align-items: stretch; }
+    .fc .fc-toolbar-chunk { display: flex; justify-content: center; }
+    .toasts { left: 16px; right: 16px; bottom: 80px; }
+    .field-row { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+</svg>
+
+<!-- ===== Вход / регистрация ===== -->
+<section id="auth-screen" class="auth" hidden>
+    <div class="auth-hero">
+        <div class="brand"><span class="brand-mark"><svg class="icon"><use href="#i-book"/></svg></span>СтудДневник</div>
+        <div>
+            <h1>Учёба, дела и заметки — в одном календаре</h1>
+            <p>Планируйте пары, дедлайны и встречи, прикрепляйте к ним заметки и держите всё под рукой.</p>
+            <ul class="hero-list">
+                <li><span class="bubble"><svg class="icon"><use href="#i-calendar"/></svg></span>Календарь на месяц, неделю и день</li>
+                <li><span class="bubble"><svg class="icon"><use href="#i-note"/></svg></span>Заметки к событиям и отдельно</li>
+                <li><span class="bubble"><svg class="icon"><use href="#i-link"/></svg></span>Синхронизация с Google Календарём</li>
+            </ul>
+        </div>
+        <small style="opacity:.7">Учебный проект · Kubernetes + Percona XtraDB Cluster</small>
+    </div>
+    <div class="auth-panel">
+        <div class="auth-card">
+            <h2 id="auth-title">С возвращением</h2>
+            <p class="sub" id="auth-sub">Войдите, чтобы открыть свой дневник</p>
+            <div class="tabs" role="tablist">
+                <button class="tab" role="tab" data-tab="login" aria-selected="true">Вход</button>
+                <button class="tab" role="tab" data-tab="register" aria-selected="false">Регистрация</button>
+            </div>
+
+            <form id="login-form" novalidate>
+                <div class="field">
+                    <label for="login-email">Email</label>
+                    <input class="input" id="login-email" name="login" type="email" autocomplete="username" placeholder="you@example.com">
+                </div>
+                <div class="field">
+                    <label for="login-password">Пароль</label>
+                    <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" placeholder="••••••••">
+                </div>
+                <div class="form-error" role="alert"></div>
+                <button class="btn btn-primary btn-block" type="submit">Войти</button>
+                <p class="demo-hint">Демо-аккаунт: <b>demo@example.com</b> / <b>demo1234</b></p>
+            </form>
+
+            <form id="register-form" novalidate hidden>
+                <div class="field">
+                    <label for="reg-email">Email</label>
+                    <input class="input" id="reg-email" name="email" type="email" autocomplete="email" placeholder="you@example.com">
+                </div>
+                <div class="field">
+                    <label for="reg-password">Пароль</label>
+                    <input class="input" id="reg-password" name="password" type="password" autocomplete="new-password" placeholder="Не короче 6 символов">
+                </div>
+                <div class="field">
+                    <label for="reg-password2">Повторите пароль</label>
+                    <input class="input" id="reg-password2" name="password2" type="password" autocomplete="new-password">
+                </div>
+                <div class="form-error" role="alert"></div>
+                <button class="btn btn-primary btn-block" type="submit">Создать аккаунт</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Приложение ===== -->
+<div id="app-screen" class="app" hidden>
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-mark"><svg class="icon"><use href="#i-book"/></svg></span>СтудДневник</div>
+        <nav class="nav">
+            <button class="nav-item" data-view="calendar"><svg class="icon"><use href="#i-calendar"/></svg>Календарь</button>
+            <button class="nav-item" data-view="notes"><svg class="icon"><use href="#i-note"/></svg>Заметки</button>
+            <button class="nav-item" data-view="profile"><svg class="icon"><use href="#i-user"/></svg>Профиль</button>
+        </nav>
+        <div class="user-card">
+            <div class="avatar" data-avatar></div>
+            <div class="meta">
+                <div class="name" data-user-name></div>
+                <div class="email" data-user-email></div>
+            </div>
+            <button class="btn btn-ghost btn-icon" data-action="logout" title="Выйти" aria-label="Выйти"><svg class="icon"><use href="#i-logout"/></svg></button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <h1 id="view-title"></h1>
+                <p id="view-sub"></p>
+            </div>
+            <button class="btn btn-primary" id="topbar-action" hidden><svg class="icon"><use href="#i-plus"/></svg><span>Новое событие</span></button>
+        </header>
+
+        <section class="view" id="view-calendar" hidden>
+            <div class="card calendar-card">
+                <div class="legend">
+                    <span><i style="background:var(--primary)"></i>События</span>
+                    <span><i style="background:var(--note)"></i>Заметки</span>
+                    <span><i style="background:var(--google)"></i>Google Календарь</span>
+                </div>
+                <div id="calendar"></div>
+            </div>
+        </section>
+
+        <section class="view" id="view-notes" hidden>
+            <form class="card composer" id="note-form">
+                <textarea class="input" name="content" placeholder="О чём нужно не забыть?" aria-label="Текст заметки"></textarea>
+                <div class="composer-foot">
+                    <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> — сохранить</span>
+                    <button class="btn btn-primary" type="submit"><svg class="icon"><use href="#i-plus"/></svg>Добавить</button>
+                </div>
+            </form>
+            <div class="notes-grid" id="notes-grid"></div>
+        </section>
+
+        <section class="view" id="view-profile" hidden>
+            <div class="profile">
+                <form class="card" id="profile-form">
+                    <div class="profile-head">
+                        <div class="avatar avatar-lg" data-avatar></div>
+                        <div>
+                            <div class="name" data-user-name></div>
+                            <div class="role">Студент</div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="profile-email">Email</label>
+                        <input class="input" id="profile-email" readonly>
+                    </div>
+                    <div class="field">
+                        <label for="profile-fullname">Полное имя</label>
+                        <input class="input" id="profile-fullname" name="fullname" placeholder="Иванов Иван Иванович" autocomplete="name">
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" type="submit">Сохранить</button>
+                    </div>
+                </form>
+
+                <div class="card">
+                    <h3>Google Календарь</h3>
+                    <p class="hint">Показывать события из вашего Google Календаря рядом с задачами дневника (только чтение).</p>
+                    <div class="status" id="google-status">Не подключён</div>
+                    <p class="hint" id="google-note"></p>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" id="google-disconnect" hidden>Отключить</button>
+                        <button class="btn btn-primary" id="google-connect"><svg class="icon"><use href="#i-link"/></svg>Подключить</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- ===== Диалоги ===== -->
+<dialog id="event-form-dialog">
+    <form id="event-form" method="dialog" novalidate>
+        <div class="dialog-head">
+            <h2>Новое событие</h2>
+            <button class="btn btn-ghost btn-icon" type="button" data-close aria-label="Закрыть"><svg class="icon"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="dialog-body">
+            <div class="field">
+                <label for="ev-title">Название</label>
+                <input class="input" id="ev-title" name="title" placeholder="Например, лекция по базам данных" maxlength="255">
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label for="ev-start">Начало</label>
+                    <input class="input" id="ev-start" name="start" type="datetime-local">
+                </div>
+                <div class="field">
+                    <label for="ev-end">Окончание</label>
+                    <input class="input" id="ev-end" name="end" type="datetime-local">
+                </div>
+            </div>
+            <div class="field">
+                <label for="ev-description">Описание</label>
+                <textarea class="input" id="ev-description" name="description" placeholder="Необязательно"></textarea>
+            </div>
+            <div class="form-error" role="alert"></div>
+        </div>
+        <div class="dialog-foot">
+            <span class="spacer"></span>
+            <button class="btn btn-secondary" type="button" data-close>Отмена</button>
+            <button class="btn btn-primary" type="submit">Создать</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="event-dialog">
+    <div class="dialog-head">
+        <div>
+            <span class="chip" id="ed-chip"></span>
+            <h2 id="ed-title"></h2>
+        </div>
+        <button class="btn btn-ghost btn-icon" type="button" data-close aria-label="Закрыть"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dialog-body">
+        <div class="when"><svg class="icon icon-sm"><use href="#i-clock"/></svg><span id="ed-when"></span></div>
+        <div class="description" id="ed-description" hidden></div>
+        <div class="field" id="ed-note-field" hidden>
+            <label for="ed-note">Заметка к событию</label>
+            <textarea class="input" id="ed-note" placeholder="Что важно помнить про это событие?"></textarea>
+        </div>
+    </div>
+    <div class="dialog-foot">
+        <button class="btn btn-danger" id="ed-delete" type="button"><svg class="icon icon-sm"><use href="#i-trash"/></svg>Удалить</button>
+        <span class="spacer"></span>
+        <button class="btn btn-secondary" type="button" data-close>Закрыть</button>
+        <button class="btn btn-primary" id="ed-save" type="button">Сохранить заметку</button>
+    </div>
+</dialog>
+
+<dialog id="confirm-dialog" style="width:min(400px, calc(100vw - 32px))">
+    <div class="dialog-head"><h2 id="confirm-title"></h2></div>
+    <div class="dialog-body"><p id="confirm-text" style="color:var(--muted)"></p></div>
+    <div class="dialog-foot">
+        <span class="spacer"></span>
+        <button class="btn btn-secondary" value="cancel" data-close>Отмена</button>
+        <button class="btn btn-primary" id="confirm-ok" style="background:var(--danger)">Удалить</button>
+    </div>
+</dialog>
+
+<div class="status-bar" id="status-bar" hidden role="status">База данных недоступна</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+// Подключение Google Календаря (только чтение). Работает лишь на https или localhost,
+// и адрес страницы должен быть добавлен в Authorized JavaScript origins в Google Cloud.
+const GOOGLE_CLIENT_ID = '197536172101-4fg2dj91ta2rptg7fan51o9eg0s16i3n.apps.googleusercontent.com';
+const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+const state = { user: null, view: null, calendar: null, dbOk: true, currentEvent: null };
+
+// ---------- хранилище ----------
+const store = {
+    get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+    set(key, value) {
+        try { value == null ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    },
+};
+
+// ---------- API ----------
+// Адреса относительные: страница и PHP отдаются одним сервером, поэтому
+// приложение работает и на localhost:8080, и на внешнем IP от MetalLB.
+async function api(path, { method = 'GET', params, body } = {}) {
+    const url = new URL(path, location.href);
+    if (params) Object.entries(params).forEach(([k, v]) => v != null && url.searchParams.set(k, v));
+
+    let res;
+    try {
+        res = await fetch(url, {
+            method,
+            headers: body ? { 'Content-Type': 'application/json' } : undefined,
+            body: body ? JSON.stringify(body) : undefined,
+            cache: 'no-store',
+        });
+    } catch {
+        setDbStatus(false);
+        throw Object.assign(new Error('База данных недоступна'), { status: 0 });
+    }
+
+    let data = null;
+    try { data = await res.json(); } catch {}
+    // 503 — бэкенд жив, но нет базы; 502/504 — бэкенд недоступен (например, переезжает
+    // на другую ноду). Для пользователя в обоих случаях данные недоступны.
+    if (UNAVAILABLE.includes(res.status)) setDbStatus(false);
+    if (!res.ok) throw Object.assign(new Error(data?.error || `Ошибка сервера (${res.status})`), { status: res.status });
+    return data;
+}
+
+const UNAVAILABLE = [0, 502, 503, 504];
+
+// ---------- доступность данных ----------
+// Раз в 5 секунд проверяем, отвечает ли бэкенд и есть ли у него связь с БД.
+// Интерфейс при этом продолжает работать: при проблеме сверху появляется плашка,
+// а когда всё восстановится, данные текущего раздела тихо перезагружаются.
+let healthBusy = false;
+
+async function checkHealth() {
+    if (healthBusy) return;   // пока ProxySQL ищет узел, ответ может идти ~10 с
+    healthBusy = true;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    let ok = false;
+    try {
+        ok = (await fetch('check_connection.php', { cache: 'no-store', signal: ctrl.signal })).ok;
+    } catch {
+        // сеть или таймаут
+    } finally {
+        clearTimeout(timer);
+        healthBusy = false;
+    }
+    setDbStatus(ok);
+}
+
+function setDbStatus(ok) {
+    const wasOk = state.dbOk;
+    state.dbOk = ok;
+    $('#status-bar').hidden = ok;
+    document.body.classList.toggle('has-status', !ok);
+    if (ok && !wasOk) refreshCurrentView();
+}
+
+// ---------- уведомления и подтверждения ----------
+function toast(message, type = '') {
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    $('#toasts').append(el);
+    setTimeout(() => el.remove(), type === 'error' ? 5000 : 3000);
+}
+
+function confirmAction(title, text) {
+    const dialog = $('#confirm-dialog');
+    $('#confirm-title').textContent = title;
+    $('#confirm-text').textContent = text;
+    dialog.showModal();
+    return new Promise(resolve => {
+        const ok = $('#confirm-ok');
+        const done = result => { ok.onclick = null; dialog.onclose = null; dialog.close(); resolve(result); };
+        ok.onclick = () => done(true);
+        dialog.onclose = () => done(false);
+    });
+}
+
+async function withBusy(button, fn) {
+    button.disabled = true;
+    try { return await fn(); } finally { button.disabled = false; }
+}
+
+// ---------- форматирование ----------
+const fmtDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' });
+const fmtTime = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
+const fmtShort = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+function formatRange(start, end, allDay) {
+    if (!start) return '';
+    if (allDay) return fmtDate.format(start);
+    const head = `${fmtDate.format(start)}, ${fmtTime.format(start)}`;
+    if (!end || +end === +start) return head;
+    return start.toDateString() === end.toDateString()
+        ? `${head} – ${fmtTime.format(end)}`
+        : `${head} – ${fmtDate.format(end)}, ${fmtTime.format(end)}`;
+}
+
+// Местное время в виде YYYY-MM-DDTHH:mm(:ss) без часового пояса
+function toLocalInput(date, withSeconds = false) {
+    const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return d.toISOString().slice(0, withSeconds ? 19 : 16);
+}
+const localNow = () => toLocalInput(new Date(), true);
+
+function initials(user) {
+    const source = (user.fullname || '').trim() || user.login || '?';
+    const parts = source.split(/[\s@._-]+/).filter(Boolean);
+    return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+}
+
+// ---------- авторизация ----------
+function showAuth() {
+    $('#app-screen').hidden = true;
+    $('#auth-screen').hidden = false;
+    switchAuthTab('login');
+}
+
+function switchAuthTab(tab) {
+    const isLogin = tab === 'login';
+    $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
+    $('#login-form').hidden = !isLogin;
+    $('#register-form').hidden = isLogin;
+    $('#auth-title').textContent = isLogin ? 'С возвращением' : 'Создайте аккаунт';
+    $('#auth-sub').textContent = isLogin ? 'Войдите, чтобы открыть свой дневник' : 'Это займёт меньше минуты';
+    $$('.form-error').forEach(e => (e.textContent = ''));
+    (isLogin ? $('#login-email') : $('#reg-email')).focus();
+}
+
+function formError(form, message) {
+    $('.form-error', form).textContent = message || '';
+}
+
+$$('.tab').forEach(t => t.addEventListener('click', () => switchAuthTab(t.dataset.tab)));
+
+$('#login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const login = form.login.value.trim();
+    const password = form.password.value;
+    if (!login || !password) return formError(form, 'Введите email и пароль');
+    formError(form, '');
+    await withBusy($('button[type=submit]', form), async () => {
+        try {
+            const { user } = await api('login.php', { method: 'POST', body: { login, password } });
+            form.reset();
+            signIn(user);
+        } catch (err) {
+            formError(form, err.message);
+        }
+    });
+});
+
+$('#register-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const email = form.email.value.trim();
+    const password = form.password.value;
+    if (!email || !password) return formError(form, 'Заполните email и пароль');
+    if (!form.email.checkValidity()) return formError(form, 'Проверьте формат email');
+    if (password.length < 6) return formError(form, 'Пароль должен быть не короче 6 символов');
+    if (password !== form.password2.value) return formError(form, 'Пароли не совпадают');
+    formError(form, '');
+    await withBusy($('button[type=submit]', form), async () => {
+        try {
+            const { user } = await api('registration.php', { method: 'POST', body: { email, password } });
+            form.reset();
+            signIn(user);
+            toast('Аккаунт создан. Добро пожаловать!', 'success');
+        } catch (err) {
+            formError(form, err.message);
+        }
+    });
+});
+
+function signIn(user) {
+    state.user = { user_id: Number(user.user_id), login: user.login, fullname: user.fullname || '' };
+    store.set('sd_user', state.user);
+    renderUser();
+    $('#auth-screen').hidden = true;
+    $('#app-screen').hidden = false;
+    showView('calendar');
+}
+
+function signOut() {
+    store.set('sd_user', null);
+    disconnectGoogle(false);
+    state.user = null;
+    state.calendar?.destroy();
+    state.calendar = null;
+    showAuth();
+}
+
+function renderUser() {
+    const u = state.user;
+    $$('[data-avatar]').forEach(el => (el.textContent = initials(u)));
+    $$('[data-user-name]').forEach(el => (el.textContent = u.fullname || u.login.split('@')[0]));
+    $$('[data-user-email]').forEach(el => (el.textContent = u.login));
+}
+
+$('[data-action=logout]').addEventListener('click', signOut);
+
+// ---------- навигация ----------
+const VIEWS = {
+    calendar: { title: 'Календарь', sub: 'Ваши события, заметки и пары', action: true },
+    notes: { title: 'Заметки', sub: 'Быстрые мысли и напоминания' },
+    profile: { title: 'Профиль', sub: 'Личные данные и интеграции' },
+};
+
+function showView(name) {
+    state.view = name;
+    const meta = VIEWS[name];
+    $('#view-title').textContent = meta.title;
+    $('#view-sub').textContent = meta.sub;
+    $('#topbar-action').hidden = !meta.action;
+    $$('.nav-item').forEach(b => (b.getAttribute('data-view') === name ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
+    Object.keys(VIEWS).forEach(v => ($(`#view-${v}`).hidden = v !== name));
+    refreshCurrentView();
+}
+
+function refreshCurrentView() {
+    if (!state.user) return;
+    if (state.view === 'calendar') {
+        if (!state.calendar) initCalendar();
+        else { state.calendar.updateSize(); state.calendar.refetchEvents(); }
+    } else if (state.view === 'notes') {
+        loadNotes();
+    } else if (state.view === 'profile') {
+        loadProfile();
+    }
+}
+
+$$('.nav-item').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+$('#topbar-action').addEventListener('click', () => openEventForm());
+
+// ---------- календарь ----------
+function initCalendar() {
+    const narrow = window.matchMedia('(max-width: 700px)').matches;
+    state.calendar = new FullCalendar.Calendar($('#calendar'), {
+        locale: 'ru',
+        firstDay: 1,
+        height: '100%',
+        initialView: narrow ? 'listWeek' : 'dayGridMonth',
+        headerToolbar: narrow
+            ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' }
+            : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
+        nowIndicator: true,
+        dayMaxEvents: 3,
+        // Событие без окончания (например, дедлайн в 23:59) не «переползает» на следующий день
+        defaultTimedEventDuration: '00:30',
+        nextDayThreshold: '06:00',
+        eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+        slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+        events: loadCalendarEvents,
+        eventClassNames: ({ event }) => {
+            const p = event.extendedProps;
+            return [`ev-${p.kind || 'task'}`, p.kind === 'task' && p.noteContent ? 'has-note' : ''];
+        },
+        eventClick: info => { info.jsEvent.preventDefault(); openEventDialog(info.event); },
+        dateClick: info => openEventForm(info.date, info.allDay),
+    });
+    state.calendar.render();
+}
+
+async function loadCalendarEvents(info, success) {
+    const params = { user_id: state.user.user_id, start: info.startStr, end: info.endStr };
+    const [tasks, notes, google] = await Promise.allSettled([
+        api('get_events.php', { params }),
+        api('get_general_note.php', { params }),
+        loadGoogleEvents(info),
+    ]);
+    const failed = [tasks, notes].find(r => r.status === 'rejected');
+    // Недоступность сервера или базы уже показана плашкой — не дублируем её уведомлением
+    if (failed && !UNAVAILABLE.includes(failed.reason.status)) toast(failed.reason.message, 'error');
+    success([tasks, notes, google].flatMap(r => (r.status === 'fulfilled' ? r.value : [])));
+}
+
+function openEventForm(date, allDay) {
+    const start = date ? new Date(date) : new Date();
+    if (!date || allDay) {
+        // Клик по дню в месяце или кнопка «Новое событие»: ближайший целый час
+        if (allDay) start.setHours(9, 0, 0, 0);
+        else start.setHours(start.getHours() + 1, 0, 0, 0);
+    }
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const form = $('#event-form');
+    form.reset();
+    formError(form, '');
+    form.start.value = toLocalInput(start);
+    form.end.value = toLocalInput(end);
+    $('#event-form-dialog').showModal();
+    form.title.focus();
+}
+
+$('#event-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = {
+        user_id: state.user.user_id,
+        title: form.title.value.trim(),
+        description: form.description.value.trim(),
+        start: form.start.value,
+        end: form.end.value,
+    };
+    if (!data.title) return formError(form, 'Введите название');
+    if (!data.start) return formError(form, 'Укажите время начала');
+    if (data.end && data.end < data.start) return formError(form, 'Окончание раньше начала');
+    await withBusy($('button[type=submit]', form), async () => {
+        try {
+            await api('add_event.php', { method: 'POST', body: data });
+            $('#event-form-dialog').close();
+            state.calendar?.refetchEvents();
+            toast('Событие добавлено', 'success');
+        } catch (err) {
+            formError(form, err.message);
+        }
+    });
+});
+
+function openEventDialog(event) {
+    const p = event.extendedProps;
+    state.currentEvent = event;
+    const chip = $('#ed-chip');
+    const labels = { task: ['Событие', ''], note: ['Заметка', 'note'], google: ['Google Календарь', 'google'] };
+    const [label, cls] = labels[p.kind] || labels.task;
+    chip.textContent = label;
+    chip.className = `chip ${cls}`;
+
+    $('#ed-title').textContent = p.kind === 'note' ? 'Заметка' : event.title;
+    $('#ed-when').textContent = formatRange(event.start, event.end, event.allDay);
+
+    const text = p.kind === 'note' ? p.noteContent : p.description;
+    $('#ed-description').hidden = !text;
+    $('#ed-description').textContent = text || '';
+
+    $('#ed-note-field').hidden = p.kind !== 'task';
+    $('#ed-save').hidden = p.kind !== 'task';
+    $('#ed-delete').hidden = p.kind === 'google';
+    $('#ed-note').value = p.noteContent || '';
+
+    $('#event-dialog').showModal();
+}
+
+$('#ed-save').addEventListener('click', e => withBusy(e.currentTarget, async () => {
+    const event = state.currentEvent;
+    try {
+        const content = $('#ed-note').value.trim();
+        await api('add_note.php', { method: 'POST', body: { user_id: state.user.user_id, task_id: event.extendedProps.taskId, content, created_at: localNow() } });
+        $('#event-dialog').close();
+        state.calendar.refetchEvents();
+        toast(content ? 'Заметка сохранена' : 'Заметка удалена', 'success');
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}));
+
+$('#ed-delete').addEventListener('click', async () => {
+    const event = state.currentEvent;
+    const isNote = event.extendedProps.kind === 'note';
+    const ok = await confirmAction(
+        isNote ? 'Удалить заметку?' : 'Удалить событие?',
+        isNote ? 'Заметка исчезнет из календаря и списка заметок.' : `«${event.title}» и заметка к нему будут удалены без возможности восстановления.`
+    );
+    if (!ok) return;
+    try {
+        if (isNote) {
+            await api('delete_note.php', { method: 'POST', body: { user_id: state.user.user_id, note_id: event.extendedProps.noteId } });
+        } else {
+            await api('delete_event.php', { method: 'POST', body: { user_id: state.user.user_id, task_id: event.extendedProps.taskId } });
+        }
+        $('#event-dialog').close();
+        state.calendar.refetchEvents();
+        toast(isNote ? 'Заметка удалена' : 'Событие удалено', 'success');
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+});
+
+// ---------- заметки ----------
+async function loadNotes() {
+    const grid = $('#notes-grid');
+    if (!grid.children.length) grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+    try {
+        const notes = await api('get_general_note.php', { params: { user_id: state.user.user_id } });
+        renderNotes(notes);
+    } catch (err) {
+        grid.innerHTML = '';
+        grid.append(emptyState('Не удалось загрузить заметки', err.message));
+    }
+}
+
+function renderNotes(notes) {
+    const grid = $('#notes-grid');
+    grid.innerHTML = '';
+    if (!notes.length) {
+        grid.append(emptyState('Пока нет заметок', 'Напишите первую заметку в поле выше — она появится здесь и в календаре.'));
+        return;
+    }
+    for (const note of notes) {
+        const card = document.createElement('article');
+        card.className = 'card note-card';
+        const text = document.createElement('p');
+        text.textContent = note.extendedProps.noteContent;
+        const foot = document.createElement('footer');
+        const date = document.createElement('span');
+        date.textContent = fmtShort.format(new Date(note.start));
+        const del = document.createElement('button');
+        del.className = 'btn btn-ghost btn-icon';
+        del.title = 'Удалить';
+        del.setAttribute('aria-label', 'Удалить заметку');
+        del.innerHTML = '<svg class="icon icon-sm"><use href="#i-trash"/></svg>';
+        del.addEventListener('click', () => deleteNote(note.extendedProps.noteId));
+        foot.append(date, del);
+        card.append(text, foot);
+        grid.append(card);
+    }
+}
+
+function emptyState(title, text) {
+    const el = document.createElement('div');
+    el.className = 'empty';
+    el.style.gridColumn = '1 / -1';
+    el.innerHTML = '<span class="bubble"><svg class="icon"><use href="#i-note"/></svg></span><b></b><span></span>';
+    el.querySelector('b').textContent = title;
+    el.querySelector('span:last-child').textContent = text;
+    return el;
+}
+
+async function deleteNote(noteId) {
+    if (!(await confirmAction('Удалить заметку?', 'Заметка исчезнет из списка и из календаря.'))) return;
+    try {
+        await api('delete_note.php', { method: 'POST', body: { user_id: state.user.user_id, note_id: noteId } });
+        toast('Заметка удалена', 'success');
+        loadNotes();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+$('#note-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const content = form.content.value.trim();
+    if (!content) { form.content.focus(); return; }
+    await withBusy($('button[type=submit]', form), async () => {
+        try {
+            await api('add_general_note.php', { method: 'POST', body: { user_id: state.user.user_id, content, created_at: localNow() } });
+            form.reset();
+            toast('Заметка добавлена', 'success');
+            loadNotes();
+        } catch (err) {
+            toast(err.message, 'error');
+        }
+    });
+});
+
+$('#note-form textarea').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('#note-form').requestSubmit();
+});
+
+// ---------- профиль ----------
+async function loadProfile() {
+    $('#profile-email').value = state.user.login;
+    $('#profile-fullname').value = state.user.fullname;
+    renderGoogleStatus();
+    try {
+        const data = await api('login.php', { method: 'POST', body: { identifier: state.user.login } });
+        state.user.fullname = data.fullname || '';
+        store.set('sd_user', state.user);
+        $('#profile-fullname').value = state.user.fullname;
+        renderUser();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+$('#profile-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fullname = $('#profile-fullname').value.trim();
+    await withBusy($('button[type=submit]', e.currentTarget), async () => {
+        try {
+            await api('update_user.php', { method: 'POST', body: { identifier: state.user.login, fullname } });
+            state.user.fullname = fullname;
+            store.set('sd_user', state.user);
+            renderUser();
+            toast('Профиль сохранён', 'success');
+        } catch (err) {
+            toast(err.message, 'error');
+        }
+    });
+});
+
+// ---------- Google Календарь ----------
+function googleToken() {
+    const g = store.get('sd_google');
+    return g && g.expires > Date.now() ? g.token : null;
+}
+
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Не удалось загрузить скрипт Google'));
+        document.head.append(s);
+    });
+}
+
+async function connectGoogle() {
+    if (!window.isSecureContext) {
+        toast('Google доступен только по https или с localhost', 'error');
+        return;
+    }
+    try {
+        await loadScript('https://accounts.google.com/gsi/client');
+    } catch (err) {
+        toast(err.message, 'error');
+        return;
+    }
+    google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPE,
+        callback: resp => {
+            if (resp.error) { toast(`Google: ${resp.error}`, 'error'); return; }
+            store.set('sd_google', { token: resp.access_token, expires: Date.now() + resp.expires_in * 1000 });
+            renderGoogleStatus();
+            toast('Google Календарь подключён', 'success');
+        },
+    }).requestAccessToken();
+}
+
+function disconnectGoogle(notify = true) {
+    const token = googleToken();
+    if (token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(token);
+    store.set('sd_google', null);
+    if (notify) { renderGoogleStatus(); toast('Google Календарь отключён'); }
+}
+
+function renderGoogleStatus() {
+    const on = !!googleToken();
+    const status = $('#google-status');
+    status.textContent = on ? 'Подключён' : 'Не подключён';
+    status.classList.toggle('on', on);
+    $('#google-connect').hidden = on;
+    $('#google-disconnect').hidden = !on;
+    $('#google-note').textContent = window.isSecureContext
+        ? ''
+        : 'Сейчас страница открыта по http с IP-адреса — Google разрешает вход только по https или с localhost.';
+}
+
+async function loadGoogleEvents(info) {
+    const token = googleToken();
+    if (!token) return [];
+    const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
+    url.search = new URLSearchParams({
+        timeMin: info.start.toISOString(), timeMax: info.end.toISOString(),
+        singleEvents: 'true', orderBy: 'startTime', maxResults: '250',
+    });
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+        if (res.status === 401) store.set('sd_google', null);
+        return [];
+    }
+    const { items = [] } = await res.json();
+    return items.map(ev => ({
+        id: `google-${ev.id}`,
+        title: ev.summary || '(без названия)',
+        start: ev.start.dateTime || ev.start.date,
+        end: ev.end?.dateTime || ev.end?.date,
+        allDay: !ev.start.dateTime,
+        extendedProps: { kind: 'google', description: ev.description || '' },
+    }));
+}
+
+$('#google-connect').addEventListener('click', connectGoogle);
+$('#google-disconnect').addEventListener('click', () => disconnectGoogle());
+
+// ---------- общие обработчики диалогов ----------
+$$('dialog').forEach(dialog => {
+    $$('[data-close]', dialog).forEach(b => b.addEventListener('click', () => dialog.close()));
+    // Клик по затемнённому фону закрывает окно
+    dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+});
+
+// ---------- запуск ----------
+(async function start() {
+    const saved = store.get('sd_user');
+    checkHealth();
+    setInterval(checkHealth, 5000);
+    if (!saved?.user_id) { showAuth(); return; }
+
+    state.user = saved;
+    renderUser();
+    $('#app-screen').hidden = false;
+    showView('calendar');
+
+    // Проверяем, что сохранённый пользователь всё ещё есть в базе
+    // (после пересоздания БД в кластере его может уже не быть).
+    try {
+        const data = await api('login.php', { method: 'POST', body: { identifier: saved.login } });
+        state.user.fullname = data.fullname || '';
+        store.set('sd_user', state.user);
+        renderUser();
+    } catch (err) {
+        if (err.status === 404) { signOut(); toast('Сессия устарела — войдите снова', 'error'); }
+    }
+})();
+</script>
+</body>
+</html>

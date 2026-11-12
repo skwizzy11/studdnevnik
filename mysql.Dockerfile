@@ -1,2 +1,3 @@
-FROM mysql:8.0.19
-COPY ./dump/lena.sql /docker-entrypoint-initdb.d/init.sql
+FROM mysql:8.0
+# Имя init.sql и путь ожидают temp-pod.yaml и db-loader.yaml из методички
+COPY ./dump/init.sql /docker-entrypoint-initdb.d/init.sql

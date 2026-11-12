@@ -1,0 +1,6 @@
+.git
+_backup_original
+manifests
+certs
+*.key
+*.pem

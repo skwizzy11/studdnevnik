@@ -1,0 +1,56 @@
+# Фронтенд: nginx со страницей приложения. Работает строго на worker1,
+# запросы к *.php проксирует в Service crud-api. Если бэкенд недоступен,
+# страница продолжает открываться и показывает плашку «База данных недоступна».
+#
+#   Браузер → 192.168.0.200 (MetalLB) → crud-frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crud-frontend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crud-frontend
+  template:
+    metadata:
+      labels:
+        app: crud-frontend
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker1
+      containers:
+        - name: crud-frontend
+          image: s2407773/crudfront:arm64
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crud-frontend-svc
+  namespace: default
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: 192.168.0.200
+spec:
+  type: LoadBalancer       # внешний адрес выдаёт MetalLB
+  selector:
+    app: crud-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

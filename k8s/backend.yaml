@@ -1,0 +1,84 @@
+# Бэкенд: PHP API (crud-api). Обычно работает на worker2, при отказе
+# worker2 переезжает на worker1 или master.
+#
+#   crud-frontend → Service crud-api:80 → crud-api → db:33006 → ProxySQL → PXC
+apiVersion: v1
+kind: Service
+metadata:
+  name: crud-api
+  namespace: default
+spec:
+  type: ClusterIP          # только внутри кластера: к бэкенду ходит фронтенд
+  selector:
+    app: crud-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crud-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crud-api
+  template:
+    metadata:
+      labels:
+        app: crud-api
+    spec:
+      affinity:
+        nodeAffinity:
+          # «Предпочитаю worker2»: обычно под работает там, но если worker2
+          # недоступен, Kubernetes разместит его на worker1 или master.
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - worker2
+      # По умолчанию Kubernetes ждёт 300 с, прежде чем пересоздать под с
+      # недоступной ноды. Здесь — 10 с: переезд заметен, но быстрый.
+      tolerations:
+        - key: node.kubernetes.io/unreachable
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 10
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 10
+      containers:
+        - name: crud-api
+          image: s2407773/crudback:arm64-v4
+          ports:
+            - containerPort: 80
+          env:
+            - name: DB_HOST
+              value: "db.default.svc.cluster.local"
+            # База доступна только на 33006 (см. db-service.yaml)
+            - name: DB_PORT
+              value: "33006"
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASS
+              value: "secret"
+            - name: DB_NAME
+              value: "db2"
+            # Имя ноды, на которой работает под (видно в ответе check_connection.php)
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 1
+            periodSeconds: 2

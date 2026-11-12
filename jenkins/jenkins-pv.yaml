@@ -1,0 +1,42 @@
+# Постоянное хранилище для Jenkins: папка /mnt/jenkins на worker2.
+# Без него Jenkins хранит плагины, учётные данные и задачи во временной
+# папке пода, и всё пропадает при каждом пересоздании пода.
+#
+# Перед применением на worker2:
+#   sudo mkdir -p /mnt/jenkins && sudo chown 1000:1000 /mnt/jenkins
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jenkins-home-pv
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain   # при удалении PVC данные не стираются
+  storageClassName: jenkins-local
+  local:
+    path: /mnt/jenkins
+  # Папка есть только на worker2, поэтому и под Jenkins будет запускаться там
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - worker2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-home
+  namespace: jenkins
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: jenkins-local
+  volumeName: jenkins-home-pv
+  resources:
+    requests:
+      storage: 8Gi

@@ -1,0 +1,17 @@
+# Секреты — в публичный репозиторий не попадают
+kube.conf
+*kubeconfig*
+*.key
+*.pem
+certs/
+
+# Личные данные
+dump/db1.sql
+dump/personal_data.sql
+
+# Резервные копии и старые конфиги Apache (не используются)
+_backup_original/
+ssl.conf
+000-default.conf
+
+.DS_Store

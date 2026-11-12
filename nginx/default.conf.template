@@ -1,0 +1,24 @@
+# Фронтенд: nginx отдаёт страницу и статику, а запросы к PHP пересылает бэкенду
+# через Service crud-api. Адрес сервиса постоянный, поэтому после переезда пода
+# бэкенда на другую ноду nginx перенастраивать не нужно.
+# ${API_HOST} подставляется из переменной окружения при запуске контейнера.
+
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        proxy_pass http://${API_HOST};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # Пока бэкенд переезжает, быстро отвечаем ошибкой, а страница
+        # показывает плашку «База данных недоступна»
+        proxy_connect_timeout 2s;
+        proxy_read_timeout 20s;
+    }
+}

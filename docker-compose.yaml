@@ -1,32 +1,50 @@
-version: "3.7"
 services:
   web-server:
-    image: mhjkeee/crudback
+    build:
+      context: .
+      dockerfile: php.Dockerfile
+    image: s2407773/crudback
     restart: always
     ports:
       - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: db1
+      DB_USER: root
+      DB_PASS: "1"
     depends_on:
-      - db
-      - phpmyadmin
+      db:
+        condition: service_healthy
+
   db:
-    image: mhjkeee/mysql
+    build:
+      context: .
+      dockerfile: mysql.Dockerfile
+    image: s2407773/mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 'secret'
-      MYSQL_DATABASE: 'lena'
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: "1"
+      MYSQL_DATABASE: db1
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin:5.0.1
+    image: phpmyadmin:5.2
     restart: always
     environment:
-      PMA_HOST: 'db'
-      PMA_USER: 'root'
-      PMA_PASSWORD: 'secret'
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: "1"
     ports:
-      - "5000:80"
+      # 5000 на macOS занят AirPlay Receiver
+      - "8081:80"
+    depends_on:
+      - db
+
 volumes:
   mysql-data:

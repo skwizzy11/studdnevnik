@@ -1,0 +1,23 @@
+# Точка входа приложения в базу: db.default.svc.cluster.local:33006.
+#
+# Сервис открыт ТОЛЬКО на порту 33006 и пересылает соединения на порт 3306
+# подов ProxySQL, а ProxySQL распределяет запросы по узлам Percona XtraDB
+# Cluster. Подключение к db:3306 не проходит: такого порта у сервиса нет.
+#
+# Заменяет ExternalName-сервис db из методички (db-externalname.yaml):
+# у ExternalName нельзя задать свои порты. Пайплайн сам удаляет старый
+# сервис db, если он другого типа или на другом порту.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/component: proxysql
+    app.kubernetes.io/instance: mysql-cluster
+  ports:
+    - name: mysql
+      port: 33006        # порт, по которому приложение обращается к базе
+      targetPort: 3306   # порт MySQL внутри подов ProxySQL
