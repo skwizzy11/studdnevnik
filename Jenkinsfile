@@ -25,16 +25,18 @@ pipeline {
                 apiVersion: v1
                 kind: Pod
                 spec:
-                  # Агент не запускаем на worker2: его выключают на демонстрации
-                  # отказа, и у него бывают проблемы с выходом в интернет.
+                  # Агент запускаем только на worker1:
+                  #  * master и так нагружен (control plane + узел базы),
+                  #    лишние 400 МБ роняют controller-manager и scheduler;
+                  #  * worker2 выключают на демонстрации отказа.
                   affinity:
                     nodeAffinity:
                       requiredDuringSchedulingIgnoredDuringExecution:
                         nodeSelectorTerms:
                         - matchExpressions:
                           - key: kubernetes.io/hostname
-                            operator: NotIn
-                            values: ['worker2']
+                            operator: In
+                            values: ['worker1']
                   containers:
                   - name: tools
                     image: alpine/k8s:1.27.4
