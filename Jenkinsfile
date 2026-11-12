@@ -238,10 +238,18 @@ pipeline {
 
     post {
         always {
-            container('tools') {
-                echo "=== ДИАГНОСТИЧЕСКАЯ ИНФОРМАЦИЯ ==="
-                sh "kubectl get pods -n ${env.NS} -o wide || true"
-                sh "kubectl get service db crud-api ${env.FRONT_SERVICE} -n ${env.NS} || true"
+            script {
+                // Если агент не запустился или не скачал код, контейнера
+                // tools уже нет — тогда диагностику просто пропускаем.
+                try {
+                    container('tools') {
+                        echo "=== ДИАГНОСТИЧЕСКАЯ ИНФОРМАЦИЯ ==="
+                        sh "kubectl get pods -n ${env.NS} -o wide || true"
+                        sh "kubectl get service db crud-api ${env.FRONT_SERVICE} -n ${env.NS} || true"
+                    }
+                } catch (err) {
+                    echo "Диагностика пропущена: агент недоступен"
+                }
             }
         }
         success {
@@ -252,9 +260,15 @@ pipeline {
         }
         failure {
             echo "Деплой завершился с ошибками"
-            container('tools') {
-                sh "kubectl describe deployment crud-api crud-frontend -n ${env.NS} || true"
-                sh "kubectl logs -l app=crud-api -n ${env.NS} --tail=30 || true"
+            script {
+                try {
+                    container('tools') {
+                        sh "kubectl describe deployment crud-api crud-frontend -n ${env.NS} || true"
+                        sh "kubectl logs -l app=crud-api -n ${env.NS} --tail=30 || true"
+                    }
+                } catch (err) {
+                    echo "Диагностика пропущена: агент недоступен"
+                }
             }
         }
     }
