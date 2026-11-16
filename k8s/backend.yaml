@@ -64,7 +64,7 @@ spec:
               value: "db.default.svc.cluster.local"
             # База доступна только на 33006 (см. db-service.yaml)
             - name: DB_PORT
-              value: "33006"
+              value: "3306"
             - name: DB_USER
               value: "root"
             - name: DB_PASS
