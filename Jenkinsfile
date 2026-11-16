@@ -169,6 +169,9 @@ pipeline {
                         }
 
                         // 4. Выбранный порт принимает соединения
+                        if (!problem && env.DB_PORT != '33006') {
+                            problem = "Неверный порт ${env.DB_PORT}: требуется 33006"
+                        }
                         if (!problem) {
                             if (sh(script: "nc -z -w 5 ${env.DB_HOST} ${env.DB_PORT}", returnStatus: true) != 0) {
                                 problem = "порт ${env.DB_PORT} не принимает соединения (база работает только на 33006)"
